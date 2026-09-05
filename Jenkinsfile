@@ -19,15 +19,20 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh '''
-                    python3 -m py_compile app/app.py
-                    echo "Tests passed"
-                '''
-            }
-        }
+        stage('Unit Test') {
+    steps {
+        sh '''
+            python3 -m venv venv-ci
+            . venv-ci/bin/activate
+
+            pip install --upgrade pip
+            pip install -r app/requirements.txt
+            pip install pytest
+
+            pytest app/tests
+        '''
     }
+}
 
     post {
         success {
