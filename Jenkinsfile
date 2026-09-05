@@ -2,8 +2,12 @@ pipeline {
     agent any
 
     environment {
+        AWS_REGION = "ap-south-1"
+        ECR_REPOSITORY = "584523978049.dkr.ecr.ap-south-1.amazonaws.com/devops-assignment-app"
+
         IMAGE_NAME = "devops-assignment-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
+
         PATH = "/Users/surajpatil/.docker/bin:/opt/homebrew/bin:${env.PATH}"
     }
 
@@ -81,6 +85,57 @@ pipeline {
 
                     echo "Trivy scan completed"
                 '''
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        echo "Logging in to Amazon ECR..."
+
+                        aws ecr get-login-password \
+                            --region ${AWS_REGION} | \
+                            docker login \
+                            --username AWS \
+                            --password-stdin ${ECR_REPOSITORY}
+
+                        echo "ECR login successful"
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        echo "Tagging Docker image for ECR..."
+
+                        docker tag \
+                            ${IMAGE_NAME}:${IMAGE_TAG} \
+                            ${ECR_REPOSITORY}:${IMAGE_TAG}
+
+                        echo "Pushing image to ECR..."
+
+                        docker push \
+                            ${ECR_REPOSITORY}:${IMAGE_TAG}
+
+                        echo "Docker image pushed successfully"
+                    '''
+                }
             }
         }
     }
