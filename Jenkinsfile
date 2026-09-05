@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "devops-assignment-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        PATH = "/Users/surajpatil/.docker/bin:${env.PATH}"
+        PATH = "/Users/surajpatil/.docker/bin:/opt/homebrew/bin:${env.PATH}"
     }
 
     stages {
@@ -69,6 +69,10 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
+                    echo "Checking Trivy installation..."
+
+                    trivy --version
+
                     echo "Scanning Docker image with Trivy..."
 
                     trivy image \
