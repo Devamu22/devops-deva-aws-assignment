@@ -35,9 +35,8 @@ pipeline {
 
                     pip install --upgrade pip
                     pip install -r app/requirements.txt
-                    pip install pytest
 
-                    pytest app/tests
+                    PYTHONPATH=. python -m pytest app/tests
 
                     echo "Unit tests passed"
                 '''
