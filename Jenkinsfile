@@ -23,8 +23,8 @@ pipeline {
                     test -f app/Dockerfile
                     test -f app/app.py
                     test -f app/requirements.txt
-                    test -f helm/devops-app/Chart.yaml
                     test -f app/tests/test_app.py
+                    test -f helm/devops-app/Chart.yaml
 
                     echo "Validation successful"
                 '''
@@ -65,20 +65,21 @@ pipeline {
                 '''
             }
         }
-    }
-    stage('Trivy Scan') {
-       steps {
-           sh '''
-                   echo "Scanning Docker image with Trivy..."
 
-                 trivy image \
-                --severity HIGH,CRITICAL \
-                ${IMAGE_NAME}:${IMAGE_TAG}
+        stage('Trivy Scan') {
+            steps {
+                sh '''
+                    echo "Scanning Docker image with Trivy..."
 
-                 echo "Trivy scan completed"
-            '''
+                    trivy image \
+                        --severity HIGH,CRITICAL \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+
+                    echo "Trivy scan completed"
+                '''
+            }
         }
- }
+    }
 
     post {
         success {
