@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION = "ap-south-1"
+
         ECR_REPOSITORY = "584523978049.dkr.ecr.ap-south-1.amazonaws.com/devops-assignment-app"
 
         IMAGE_NAME = "devops-assignment-app"
@@ -22,13 +23,16 @@ pipeline {
         stage('Validate') {
             steps {
                 sh '''
-                    echo "Validating project..."
+                    echo "========================================"
+                    echo "Validating project structure"
+                    echo "========================================"
 
                     test -f app/Dockerfile
                     test -f app/app.py
                     test -f app/requirements.txt
                     test -f app/tests/test_app.py
                     test -f helm/devops-app/Chart.yaml
+                    test -f helm/devops-app/values.yaml
 
                     echo "Validation successful"
                 '''
@@ -38,7 +42,9 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh '''
-                    echo "Running unit tests..."
+                    echo "========================================"
+                    echo "Running unit tests"
+                    echo "========================================"
 
                     python3 -m venv venv-ci
                     . venv-ci/bin/activate
@@ -56,7 +62,9 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-                    echo "Building Docker image..."
+                    echo "========================================"
+                    echo "Building Docker image"
+                    echo "========================================"
 
                     docker build \
                         --platform linux/amd64 \
@@ -73,11 +81,11 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    echo "Checking Trivy installation..."
+                    echo "========================================"
+                    echo "Running Trivy image scan"
+                    echo "========================================"
 
                     trivy --version
-
-                    echo "Scanning Docker image with Trivy..."
 
                     trivy image \
                         --severity HIGH,CRITICAL \
@@ -98,7 +106,9 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        echo "Logging in to Amazon ECR..."
+                        echo "========================================"
+                        echo "Logging in to Amazon ECR"
+                        echo "========================================"
 
                         aws ecr get-login-password \
                             --region ${AWS_REGION} | \
@@ -112,7 +122,7 @@ pipeline {
             }
         }
 
-        stage('Push Image to ECR') {
+        stage('ECR Push') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -122,31 +132,76 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        echo "Tagging Docker image for ECR..."
+                        echo "========================================"
+                        echo "Tagging Docker image"
+                        echo "========================================"
 
                         docker tag \
                             ${IMAGE_NAME}:${IMAGE_TAG} \
                             ${ECR_REPOSITORY}:${IMAGE_TAG}
 
-                        echo "Pushing image to ECR..."
+                        echo "Pushing image to ECR"
 
                         docker push \
                             ${ECR_REPOSITORY}:${IMAGE_TAG}
 
-                        echo "Docker image pushed successfully"
+                        echo "ECR push successful"
                     '''
                 }
+            }
+        }
+
+        stage('Helm Lint') {
+            steps {
+                sh '''
+                    echo "========================================"
+                    echo "Running Helm lint"
+                    echo "========================================"
+
+                    helm lint ./helm/devops-app
+
+                    echo "Helm lint passed"
+                '''
+            }
+        }
+
+        stage('Helm Template') {
+            steps {
+                sh '''
+                    echo "========================================"
+                    echo "Rendering Helm templates"
+                    echo "========================================"
+
+                    helm template devops-app ./helm/devops-app
+
+                    echo "Helm template rendering successful"
+                '''
             }
         }
     }
 
     post {
+
         success {
-            echo 'Pipeline completed successfully'
+            echo '''
+            ========================================
+            PIPELINE COMPLETED SUCCESSFULLY
+            ========================================
+            '''
         }
 
         failure {
-            echo 'Pipeline failed'
+            echo '''
+            ========================================
+            PIPELINE FAILED
+            ========================================
+            Please check the failed stage above.
+            ========================================
+            '''
+        }
+
+        always {
+            echo "Jenkins build completed: ${BUILD_NUMBER}"
         }
     }
 }
