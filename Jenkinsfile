@@ -18,6 +18,7 @@ pipeline {
                     test -f app/app.py
                     test -f app/requirements.txt
                     test -f helm/devops-app/Chart.yaml
+                    test -f app/tests/test_app.py
 
                     echo "Validation successful"
                 '''
