@@ -66,6 +66,19 @@ pipeline {
             }
         }
     }
+    stage('Trivy Scan') {
+       steps {
+           sh '''
+                   echo "Scanning Docker image with Trivy..."
+
+                 trivy image \
+                --severity HIGH,CRITICAL \
+                ${IMAGE_NAME}:${IMAGE_TAG}
+
+                 echo "Trivy scan completed"
+            '''
+        }
+ }
 
     post {
         success {
