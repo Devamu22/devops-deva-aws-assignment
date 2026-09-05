@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "devops-assignment-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
+        PATH = "/Users/surajpatil/.docker/bin:${env.PATH}"
     }
 
     stages {
