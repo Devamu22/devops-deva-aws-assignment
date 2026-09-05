@@ -11,7 +11,7 @@ pipeline {
         stage('Validate') {
             steps {
                 sh '''
-                    test -f Dockerfile
+                    test -f app/Dockerfile
                     test -f app/app.py
                     test -f helm/devops-app/Chart.yaml
                     echo "Validation successful"
