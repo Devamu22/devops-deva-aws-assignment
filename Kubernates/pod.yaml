@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: devops-app
+  namespace: devops
+
+spec:
+  containers:
+    - name: devops-app
+      image: 584523978049.dkr.ecr.ap-south-1.amazonaws.com/devops-assignment-app:1.0
+
+      ports:
+        - containerPort: 8080
