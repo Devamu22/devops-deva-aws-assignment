@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "devops-assignment-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -39,6 +44,23 @@ pipeline {
                     PYTHONPATH=. python -m pytest app/tests
 
                     echo "Unit tests passed"
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                    echo "Building Docker image..."
+
+                    docker build \
+                        --platform linux/amd64 \
+                        -t ${IMAGE_NAME}:${IMAGE_TAG} \
+                        ./app
+
+                    echo "Docker image built successfully"
+
+                    docker images ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
