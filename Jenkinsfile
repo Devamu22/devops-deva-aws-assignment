@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Checking out source code'
@@ -11,33 +12,43 @@ pipeline {
         stage('Validate') {
             steps {
                 sh '''
+                    echo "Validating project..."
+
                     test -f app/Dockerfile
                     test -f app/app.py
+                    test -f app/requirements.txt
                     test -f helm/devops-app/Chart.yaml
+
                     echo "Validation successful"
                 '''
             }
         }
 
         stage('Unit Test') {
-    steps {
-        sh '''
-            python3 -m venv venv-ci
-            . venv-ci/bin/activate
+            steps {
+                sh '''
+                    echo "Running unit tests..."
 
-            pip install --upgrade pip
-            pip install -r app/requirements.txt
-            pip install pytest
+                    python3 -m venv venv-ci
+                    . venv-ci/bin/activate
 
-            pytest app/tests
-        '''
+                    pip install --upgrade pip
+                    pip install -r app/requirements.txt
+                    pip install pytest
+
+                    pytest app/tests
+
+                    echo "Unit tests passed"
+                '''
+            }
+        }
     }
-}
 
     post {
         success {
             echo 'Pipeline completed successfully'
         }
+
         failure {
             echo 'Pipeline failed'
         }
